@@ -158,7 +158,7 @@ function App() {
 
   // Render
   return (
-    <div className="app" style={{backgroundImage: `url(${process.env.PUBLIC_URL}/OakCraft Logo email.jpg)`}}>
+    <div className="app">
       <header className="header">
         <div className="header-content">
           <h1>Engineering Questions</h1>
