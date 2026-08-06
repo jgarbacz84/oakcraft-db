@@ -427,6 +427,7 @@ function App() {
     </div>
   </div>
 )}
+ </main>
 
       {showPasswordPrompt && (
         <div className="password-modal">
@@ -485,5 +486,5 @@ function App() {
     </div>
   );
 }
- </main>
+
 export default App;
