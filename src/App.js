@@ -97,22 +97,43 @@ function App() {
     }
   };
 
-  // Search & filter
-  const filteredResults = qaPairs.filter((qa) => {
-    const matchesQuery =
-      qa.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      qa.answer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || qa.category_id === parseInt(selectedCategory);
-    return matchesQuery && matchesCategory;
-  });
+// Search & filter - matches both exact phrases and individual words
+const filteredResults = qaPairs.filter((qa) => {
+  const searchLower = searchQuery.toLowerCase();
+  const questionLower = qa.question.toLowerCase();
+  const answerLower = qa.answer.toLowerCase();
+  
+  // Check exact phrase match first
+  const exactMatch = questionLower.includes(searchLower) || answerLower.includes(searchLower);
+  
+  // Also check if any individual word matches
+  const searchWords = searchLower.split(/\s+/).filter(w => w.length > 0);
+  const wordMatch = searchWords.some(word => 
+    questionLower.includes(word) || answerLower.includes(word)
+  );
+  
+  const matchesQuery = exactMatch || wordMatch;
+  const matchesCategory = !selectedCategory || qa.category_id === parseInt(selectedCategory);
+  return matchesQuery && matchesCategory;
+});
 
-  // Admin search & filter
-  const filteredAdminResults = qaPairs.filter((qa) => {
-    return (
-      qa.question.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-      qa.answer.toLowerCase().includes(adminSearchQuery.toLowerCase())
-    );
-  });
+ // Admin search & filter - matches both exact phrases and individual words
+const filteredAdminResults = qaPairs.filter((qa) => {
+  const searchLower = adminSearchQuery.toLowerCase();
+  const questionLower = qa.question.toLowerCase();
+  const answerLower = qa.answer.toLowerCase();
+  
+  // Check exact phrase match first
+  const exactMatch = questionLower.includes(searchLower) || answerLower.includes(searchLower);
+  
+  // Also check if any individual word matches
+  const searchWords = searchLower.split(/\s+/).filter(w => w.length > 0);
+  const wordMatch = searchWords.some(word => 
+    questionLower.includes(word) || answerLower.includes(word)
+  );
+  
+  return exactMatch || wordMatch;
+});
 
   // Admin: Add/Update Q&A
   const handleSaveQA = async (e) => {
