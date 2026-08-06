@@ -160,24 +160,26 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="header-content">
-          <h1>Engineering Questions</h1>
-          <div className="nav">
-            <button
-              className={`nav-btn ${view === 'search' ? 'active' : ''}`}
-              onClick={() => setView('search')}
-            >
-              Search
-            </button>
-            <button
-              className={`nav-btn ${view === 'admin' ? 'active' : ''}`}
-              onClick={() => setView('admin')}
-            >
-              Manage
-            </button>
-          </div>
-        </div>
-      </header>
+  <div className="header-content">
+    <div className="header-title">
+      <h1>Engineering Questions</h1>
+    </div>
+    <div className="nav">
+      <button
+        className={`nav-btn ${view === 'search' ? 'active' : ''}`}
+        onClick={() => setView('search')}
+      >
+        Search
+      </button>
+      <button
+        className={`nav-btn ${view === 'admin' ? 'active' : ''}`}
+        onClick={() => setView('admin')}
+      >
+        Manage
+      </button>
+    </div>
+  </div>
+</header>
 
       <main className="container">
         {view === 'search' && (
