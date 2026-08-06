@@ -10,16 +10,15 @@
   opacity: 1;
 }
 
-.app::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
-  pointer-events: none;
-  z-index: -1;
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 40%;
+  position: relative;
 }
 body {
   margin: 0;
