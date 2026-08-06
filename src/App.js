@@ -65,7 +65,7 @@ function App() {
     }
   };
 
-  // Convert image to base64
+// Convert image to base64
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -74,6 +74,26 @@ function App() {
         setAdminImage(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle paste events
+  const handleImagePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAdminImage(reader.result);
+          setAdminSuccess('Image pasted!');
+          setTimeout(() => setAdminSuccess(''), 2000);
+        };
+        reader.readAsDataURL(file);
+        break;
+      }
     }
   };
 
@@ -322,26 +342,29 @@ function App() {
                 </div>
 
                 <div className="form-group">
-                  <label>Image (optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="form-file"
-                  />
-                  {adminImage && (
-                    <div className="image-preview">
-                      <img src={adminImage} alt="Preview" />
-                      <button
-                        type="button"
-                        onClick={() => setAdminImage(null)}
-                        className="remove-image-btn"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
+  <label>Image (optional)</label>
+  <div className="image-upload-area" onPaste={handleImagePaste}>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={handleImageUpload}
+      className="form-file"
+    />
+    <p className="image-help-text">Click to upload or paste (Ctrl+V)</p>
+  </div>
+  {adminImage && (
+    <div className="image-preview">
+      <img src={adminImage} alt="Preview" />
+      <button
+        type="button"
+        onClick={() => setAdminImage(null)}
+        className="remove-image-btn"
+      >
+        Remove
+      </button>
+    </div>
+  )}
+</div>
 
                 <div className="form-group">
                   <label>Category</label>
