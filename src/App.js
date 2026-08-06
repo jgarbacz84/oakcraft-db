@@ -7,24 +7,29 @@ const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 function App() {
-  const [view, setView] = useState('search'); // 'search' or 'admin'
+  const [view, setView] = useState('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [qaPairs, setQaPairs] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
-  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
 
   // Admin state
   const [adminQuestion, setAdminQuestion] = useState('');
   const [adminAnswer, setAdminAnswer] = useState('');
+  const [adminImage, setAdminImage] = useState(null);
   const [adminCategory, setAdminCategory] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [adminError, setAdminError] = useState('');
   const [adminSuccess, setAdminSuccess] = useState('');
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
+
+  // Menu state
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Load data on mount
   useEffect(() => {
@@ -59,6 +64,18 @@ function App() {
     }
   };
 
+  // Convert image to base64
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAdminImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Search & filter
   const filteredResults = qaPairs.filter((qa) => {
     const matchesQuery =
@@ -68,6 +85,14 @@ function App() {
     return matchesQuery && matchesCategory;
   });
 
+  // Admin search & filter
+  const filteredAdminResults = qaPairs.filter((qa) => {
+    return (
+      qa.question.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
+      qa.answer.toLowerCase().includes(adminSearchQuery.toLowerCase())
+    );
+  });
+
   // Admin: Add/Update Q&A
   const handleSaveQA = async (e) => {
     e.preventDefault();
@@ -75,7 +100,7 @@ function App() {
     setAdminSuccess('');
 
     if (!adminQuestion.trim() || !adminAnswer.trim() || !adminCategory) {
-      setAdminError('All fields are required');
+      setAdminError('Question, answer, and category are required');
       return;
     }
 
@@ -89,6 +114,7 @@ function App() {
           .update({
             question: adminQuestion,
             answer: adminAnswer,
+            image: adminImage,
             category_id: categoryId,
             updated_at: new Date().toISOString(),
           })
@@ -103,6 +129,7 @@ function App() {
           .insert({
             question: adminQuestion,
             answer: adminAnswer,
+            image: adminImage,
             category_id: categoryId,
           });
 
@@ -113,11 +140,11 @@ function App() {
       // Reset form and reload
       setAdminQuestion('');
       setAdminAnswer('');
+      setAdminImage(null);
       setAdminCategory('');
       setEditingId(null);
       await loadData();
 
-      // Clear success message after 3 seconds
       setTimeout(() => setAdminSuccess(''), 3000);
     } catch (err) {
       setAdminError(`Error: ${err.message}`);
@@ -129,6 +156,7 @@ function App() {
     setEditingId(qa.id);
     setAdminQuestion(qa.question);
     setAdminAnswer(qa.answer);
+    setAdminImage(qa.image || null);
     setAdminCategory(qa.category_id?.toString() || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -155,40 +183,50 @@ function App() {
     setEditingId(null);
     setAdminQuestion('');
     setAdminAnswer('');
+    setAdminImage(null);
     setAdminCategory('');
     setAdminError('');
+  };
+
+  // Handle admin access
+  const handleManageClick = () => {
+    if (!adminAuthenticated) {
+      setShowPasswordPrompt(true);
+    } else {
+      setView('admin');
+      setMenuOpen(false);
+    }
   };
 
   // Render
   return (
     <div className="app">
       <header className="header">
-  <div className="header-content">
-    <div className="header-title">
-      <h1>Engineering Questions</h1>
-    </div>
-    <div className="nav">
-      <button
-        className={`nav-btn ${view === 'search' ? 'active' : ''}`}
-        onClick={() => setView('search')}
-      >
-        Search
-      </button>
-    <button
-  className={`nav-btn ${view === 'admin' ? 'active' : ''}`}
-  onClick={() => {
-    if (!adminAuthenticated) {
-      setShowPasswordPrompt(true);
-    } else {
-      setView('admin');
-    }
-  }}
->
-  Manage
-</button>
-    </div>
-  </div>
-</header>
+        <div className="header-content">
+          <h1>engineering questions</h1>
+          <div className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          {menuOpen && (
+            <div className="dropdown-menu">
+              <button
+                className={`menu-item ${view === 'search' ? 'active' : ''}`}
+                onClick={() => {
+                  setView('search');
+                  setMenuOpen(false);
+                }}
+              >
+                Search
+              </button>
+              <button className="menu-item" onClick={handleManageClick}>
+                Manage
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
 
       <main className="container">
         {view === 'search' && (
@@ -230,9 +268,14 @@ function App() {
               {filteredResults.map((qa) => (
                 <div key={qa.id} className="qa-card">
                   <div className="qa-header">
-                    <h2>{qa.question}</h2>
-                    <span className="category-badge">{qa.categories?.name}</span>
+                    <div>
+                      <h2>{qa.question}</h2>
+                      <span className="category-badge">{qa.categories?.name}</span>
+                    </div>
                   </div>
+                  {qa.image && (
+                    <img src={qa.image} alt="Q&A" className="qa-image" />
+                  )}
                   <p className="qa-answer">{qa.answer}</p>
                 </div>
               ))}
@@ -256,6 +299,7 @@ function App() {
                     value={adminQuestion}
                     onChange={(e) => setAdminQuestion(e.target.value)}
                     placeholder="What is the lead time for...?"
+                    className="form-input-large"
                   />
                 </div>
 
@@ -265,8 +309,31 @@ function App() {
                     value={adminAnswer}
                     onChange={(e) => setAdminAnswer(e.target.value)}
                     placeholder="Type the answer here..."
-                    rows="6"
+                    rows="8"
+                    className="form-textarea-large"
                   />
+                </div>
+
+                <div className="form-group">
+                  <label>Image (optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="form-file"
+                  />
+                  {adminImage && (
+                    <div className="image-preview">
+                      <img src={adminImage} alt="Preview" />
+                      <button
+                        type="button"
+                        onClick={() => setAdminImage(null)}
+                        className="remove-image-btn"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -274,6 +341,7 @@ function App() {
                   <select
                     value={adminCategory}
                     onChange={(e) => setAdminCategory(e.target.value)}
+                    className="form-select-large"
                   >
                     <option value="">Select a category</option>
                     {categories.map((cat) => (
@@ -300,10 +368,19 @@ function App() {
             <div className="admin-list-section">
               <h2>All Q&As ({qaPairs.length})</h2>
 
+              <div className="admin-search-box">
+                <input
+                  type="text"
+                  placeholder="Search to edit or delete..."
+                  value={adminSearchQuery}
+                  onChange={(e) => setAdminSearchQuery(e.target.value)}
+                />
+              </div>
+
               {loading && <div className="loading">Loading...</div>}
 
               <div className="qa-list">
-                {qaPairs.map((qa) => (
+                {filteredAdminResults.map((qa) => (
                   <div key={qa.id} className="qa-list-item">
                     <div className="qa-list-header">
                       <div>
@@ -325,6 +402,9 @@ function App() {
                         </button>
                       </div>
                     </div>
+                    {qa.image && (
+                      <img src={qa.image} alt="Q&A" className="qa-list-image" />
+                    )}
                     <p className="qa-list-answer">{qa.answer}</p>
                   </div>
                 ))}
@@ -332,54 +412,62 @@ function App() {
             </div>
           </div>
         )}
-          {showPasswordPrompt && (
-  <div className="password-modal">
-    <div className="password-box">
-      <h2>Engineering Team Only</h2>
-      <input
-        type="password"
-        placeholder="Enter password"
-        value={adminPassword}
-        onChange={(e) => setAdminPassword(e.target.value)}
-        onKeyPress={(e) => {
-          if (e.key === 'Enter') {
-            if (adminPassword === 'OakCraft2024') {
-              setAdminAuthenticated(true);
-              setShowPasswordPrompt(false);
-              setView('admin');
-              setAdminPassword('');
-            } else {
-              alert('Wrong password');
-              setAdminPassword('');
-            }
-          }
-        }}
-      />
-      <div className="password-buttons">
-        <button onClick={() => {
-          if (adminPassword === 'OakCraft2024') {
-            setAdminAuthenticated(true);
-            setShowPasswordPrompt(false);
-            setView('admin');
-            setAdminPassword('');
-          } else {
-            alert('Wrong password');
-            setAdminPassword('');
-          }
-        }} className="btn btn-primary">
-          Unlock
-        </button>
-        <button onClick={() => {
-          setShowPasswordPrompt(false);
-          setAdminPassword('');
-        }} className="btn btn-secondary">
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
       </main>
+
+      {showPasswordPrompt && (
+        <div className="password-modal">
+          <div className="password-box">
+            <h2>Engineering Team Only</h2>
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  if (adminPassword === 'OakCraft2024') {
+                    setAdminAuthenticated(true);
+                    setShowPasswordPrompt(false);
+                    setView('admin');
+                    setAdminPassword('');
+                  } else {
+                    alert('Wrong password');
+                    setAdminPassword('');
+                  }
+                }
+              }}
+              autoFocus
+            />
+            <div className="password-buttons">
+              <button
+                onClick={() => {
+                  if (adminPassword === 'OakCraft2024') {
+                    setAdminAuthenticated(true);
+                    setShowPasswordPrompt(false);
+                    setView('admin');
+                    setAdminPassword('');
+                  } else {
+                    alert('Wrong password');
+                    setAdminPassword('');
+                  }
+                }}
+                className="btn btn-primary"
+              >
+                Unlock
+              </button>
+              <button
+                onClick={() => {
+                  setShowPasswordPrompt(false);
+                  setAdminPassword('');
+                }}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
