@@ -161,7 +161,7 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-content">
-          <h1>Engineering KB</h1>
+          <h1>Engineering Questions</h1>
           <div className="nav">
             <button
               className={`nav-btn ${view === 'search' ? 'active' : ''}`}
