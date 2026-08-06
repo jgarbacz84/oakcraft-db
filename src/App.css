@@ -399,6 +399,9 @@ body {
 .admin-list-section {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  max-height: 100%;
+  padding-right: 0.5rem;
 }
 
 .admin-list-section h2 {
