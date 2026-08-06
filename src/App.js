@@ -14,6 +14,7 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // Admin state
   const [adminQuestion, setAdminQuestion] = useState('');
@@ -273,9 +274,15 @@ function App() {
                       <span className="category-badge">{qa.categories?.name}</span>
                     </div>
                   </div>
-                  {qa.image && (
-                    <img src={qa.image} alt="Q&A" className="qa-image" />
-                  )}
+                {qa.image && (
+  <img 
+    src={qa.image} 
+    alt="Q&A" 
+    className="qa-image" 
+    onClick={() => setSelectedImage(qa.image)}
+    style={{ cursor: 'pointer' }}
+  />
+)}
                   <p className="qa-answer">{qa.answer}</p>
                 </div>
               ))}
@@ -412,7 +419,14 @@ function App() {
             </div>
           </div>
         )}
-      </main>
+     {selectedImage && (
+  <div className="image-modal" onClick={() => setSelectedImage(null)}>
+    <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+      <img src={selectedImage} alt="Full size" />
+      <button className="close-image-modal" onClick={() => setSelectedImage(null)}>✕</button>
+    </div>
+  </div>
+)}
 
       {showPasswordPrompt && (
         <div className="password-modal">
@@ -471,5 +485,5 @@ function App() {
     </div>
   );
 }
-
+ </main>
 export default App;
