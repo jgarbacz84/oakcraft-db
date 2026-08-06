@@ -517,6 +517,33 @@ body {
   border-radius: 12px;
   color: #999;
 }
+/* Image Upload Area */
+.image-upload-area {
+  border: 2px dashed #8B4513;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-upload-area:hover {
+  background: #f5f5f5;
+  border-color: #A0522D;
+}
+
+.image-upload-area input {
+  cursor: pointer;
+  width: 100%;
+}
+
+.image-help-text {
+  color: #999;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  pointer-events: none;
+}
 
 /* Password Modal */
 .password-modal {
