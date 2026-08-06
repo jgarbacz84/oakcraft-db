@@ -1,25 +1,15 @@
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-image: url('/OakCraftLogoemail.jpg');
-  background-attachment: fixed;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 40%;
-  opacity: 1;
+.header {
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+  padding: 2rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.app::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
-  pointer-events: none;
-  z-index: -1;
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
 }
 body {
   margin: 0;
