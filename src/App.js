@@ -14,6 +14,9 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
 
   // Admin state
   const [adminQuestion, setAdminQuestion] = useState('');
@@ -171,12 +174,18 @@ function App() {
       >
         Search
       </button>
-      <button
-        className={`nav-btn ${view === 'admin' ? 'active' : ''}`}
-        onClick={() => setView('admin')}
-      >
-        Manage
-      </button>
+    <button
+  className={`nav-btn ${view === 'admin' ? 'active' : ''}`}
+  onClick={() => {
+    if (!adminAuthenticated) {
+      setShowPasswordPrompt(true);
+    } else {
+      setView('admin');
+    }
+  }}
+>
+  Manage
+</button>
     </div>
   </div>
 </header>
@@ -323,6 +332,53 @@ function App() {
             </div>
           </div>
         )}
+          {showPasswordPrompt && (
+  <div className="password-modal">
+    <div className="password-box">
+      <h2>Engineering Team Only</h2>
+      <input
+        type="password"
+        placeholder="Enter password"
+        value={adminPassword}
+        onChange={(e) => setAdminPassword(e.target.value)}
+        onKeyPress={(e) => {
+          if (e.key === 'Enter') {
+            if (adminPassword === 'OakCraft2024') {
+              setAdminAuthenticated(true);
+              setShowPasswordPrompt(false);
+              setView('admin');
+              setAdminPassword('');
+            } else {
+              alert('Wrong password');
+              setAdminPassword('');
+            }
+          }
+        }}
+      />
+      <div className="password-buttons">
+        <button onClick={() => {
+          if (adminPassword === 'OakCraft2024') {
+            setAdminAuthenticated(true);
+            setShowPasswordPrompt(false);
+            setView('admin');
+            setAdminPassword('');
+          } else {
+            alert('Wrong password');
+            setAdminPassword('');
+          }
+        }} className="btn btn-primary">
+          Unlock
+        </button>
+        <button onClick={() => {
+          setShowPasswordPrompt(false);
+          setAdminPassword('');
+        }} className="btn btn-secondary">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </main>
     </div>
   );
