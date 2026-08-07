@@ -928,3 +928,12 @@ body {
     border-left-color: #8B4513;
   }
 }
+.ask-team-section {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.ask-team-section .btn {
+  padding: 1rem 2rem;
+  font-size: 1rem;
+}
