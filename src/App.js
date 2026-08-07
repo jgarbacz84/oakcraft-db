@@ -6,7 +6,7 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// EMAIL PLACEHOLDERS - Replace with actual emails tomorrow
+// EMAIL PLACEHOLDERS - Replace with actual emails
 const ENGINEER_EMAILS = [
   'engineer1@oakcraft.com',
   'engineer2@oakcraft.com',
@@ -15,7 +15,7 @@ const ENGINEER_EMAILS = [
 
 function App() {
   const [view, setView] = useState('search');
-  const [manageTab, setManageTab] = useState('qa'); // 'qa' or 'pending'
+  const [manageTab, setManageTab] = useState('qa');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [qaPairs, setQaPairs] = useState([]);
@@ -28,7 +28,7 @@ function App() {
   const [adminQuestion, setAdminQuestion] = useState('');
   const [adminAnswer, setAdminAnswer] = useState('');
   const [adminImage, setAdminImage] = useState(null);
-  const [adminCategory, setAdminCategory] = useState('');
+  const [adminCategories, setAdminCategories] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [adminError, setAdminError] = useState('');
   const [adminSuccess, setAdminSuccess] = useState('');
@@ -36,16 +36,16 @@ function App() {
 
   // Pending questions state
   const [respondingTo, setRespondingTo] = useState(null);
-  const [responseType, setResponseType] = useState('answer'); // 'answer' or 'info'
+  const [responseType, setResponseType] = useState('answer');
   const [responseText, setResponseText] = useState('');
-  const [responseCategory, setResponseCategory] = useState('');
+  const [responseCategories, setResponseCategories] = useState([]);
 
   // Ask team state
   const [showAskTeam, setShowAskTeam] = useState(false);
   const [askTeamName, setAskTeamName] = useState('');
   const [askTeamEmail, setAskTeamEmail] = useState('');
   const [askTeamQuestion, setAskTeamQuestion] = useState('');
-  const [askTeamCategory, setAskTeamCategory] = useState('');
+  const [askTeamCategories, setAskTeamCategories] = useState([]);
   const [askTeamError, setAskTeamError] = useState('');
   const [askTeamSuccess, setAskTeamSuccess] = useState('');
 
@@ -58,7 +58,6 @@ function App() {
   // Image modal
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // Load data on mount
   useEffect(() => {
     loadData();
   }, []);
@@ -68,7 +67,6 @@ function App() {
       setLoading(true);
       setError('');
 
-      // Fetch categories
       const { data: catData, error: catError } = await supabase
         .from('categories')
         .select('*')
@@ -76,160 +74,37 @@ function App() {
       if (catError) throw catError;
       setCategories(catData || []);
 
-      // Fetch Q&A pairs
       const { data: qaData, error: qaError } = await supabase
         .from('qa_pairs')
-        .select('*, categories(name)')
+        .select('*')
         .order('created_at', { ascending: false });
       if (qaError) throw qaError;
       setQaPairs(qaData || []);
 
-      // Fetch pending questions
       const { data: pendingData, error: pendingError } = await supabase
         .from('pending_questions')
-        .select('*, categories(name)')
+        .select('*')
         .order('created_at', { ascending: false });
       if (pendingError) throw pendingError;
       setPendingQuestions(pendingData || []);
     } catch (err) {
       setError(`Failed to load data: ${err.message}`);
-      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Generate unique ticket ID
   const generateTicketId = () => {
     return 'TKT-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
   };
 
-  // Handle asking the team
-  const handleAskTeam = async (e) => {
-    e.preventDefault();
-    setAskTeamError('');
-    setAskTeamSuccess('');
-
-    if (!askTeamName.trim() || !askTeamEmail.trim() || !askTeamQuestion.trim() || !askTeamCategory) {
-      setAskTeamError('All fields are required');
-      return;
-    }
-
-    try {
-      const ticketId = generateTicketId();
-      const categoryId = parseInt(askTeamCategory);
-
-      // Insert pending question
-      const { error: insertError } = await supabase
-        .from('pending_questions')
-        .insert({
-          ticket_id: ticketId,
-          user_email: askTeamEmail,
-          user_name: askTeamName,
-          question: askTeamQuestion,
-          category_id: categoryId,
-          status: 'open'
-        });
-
-      if (insertError) throw insertError;
-
-      // TODO: Send email to engineering team
-      // This will use SendGrid or similar. For now, just simulate
-      console.log('Email sent to engineers:', ENGINEER_EMAILS);
-      console.log('Ticket:', ticketId);
-
-      setAskTeamSuccess(`Question submitted! Your ticket ID is: ${ticketId}. You'll receive updates at ${askTeamEmail}`);
-      
-      // Reset form
-      setAskTeamName('');
-      setAskTeamEmail('');
-      setAskTeamQuestion('');
-      setAskTeamCategory('');
-      setShowAskTeam(false);
-
-      // Reload pending questions
-      await loadData();
-
-      setTimeout(() => setAskTeamSuccess(''), 5000);
-    } catch (err) {
-      setAskTeamError(`Error: ${err.message}`);
-    }
+  const getCategoryNames = (categoryIds) => {
+    if (!categoryIds || !Array.isArray(categoryIds)) return [];
+    return categoryIds
+      .map(id => categories.find(c => c.id === id)?.name)
+      .filter(Boolean);
   };
 
-  // Handle engineer response
-  const handleRespond = async (e) => {
-    e.preventDefault();
-    setAdminError('');
-    setAdminSuccess('');
-
-    if (!responseText.trim()) {
-      setAdminError('Response text is required');
-      return;
-    }
-
-    try {
-      const pending = respondingTo;
-
-      if (responseType === 'answer') {
-        if (!responseCategory) {
-          setAdminError('Category is required when adding to KB');
-          return;
-        }
-
-        // Add to KB
-        const { error: addError } = await supabase
-          .from('qa_pairs')
-          .insert({
-            question: pending.question,
-            answer: responseText,
-            category_id: parseInt(responseCategory),
-            image: null
-          });
-        if (addError) throw addError;
-
-        // Update pending question status
-        const { error: updateError } = await supabase
-          .from('pending_questions')
-          .update({
-            status: 'answered',
-            engineer_response: responseText,
-            resolved_at: new Date().toISOString()
-          })
-          .eq('id', pending.id);
-        if (updateError) throw updateError;
-
-        setAdminSuccess('Answer added to KB and user notified!');
-      } else {
-        // Need more info
-        const { error: updateError } = await supabase
-          .from('pending_questions')
-          .update({
-            status: 'info_needed',
-            engineer_response: responseText
-          })
-          .eq('id', pending.id);
-        if (updateError) throw updateError;
-
-        setAdminSuccess('User requested for more info!');
-      }
-
-      // TODO: Send email to user
-      console.log('Email sent to user:', pending.user_email);
-
-      // Reset form and reload
-      setResponseText('');
-      setResponseType('answer');
-      setResponseCategory('');
-      setRespondingTo(null);
-      await loadData();
-
-      setTimeout(() => setAdminSuccess(''), 3000);
-    } catch (err) {
-      setAdminError(`Error: ${err.message}`);
-    }
-  };
-
-  // Convert image to base64
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -241,7 +116,6 @@ function App() {
     }
   };
 
-  // Handle paste events
   const handleImagePaste = (e) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -261,54 +135,48 @@ function App() {
     }
   };
 
-  // Search & filter - matches both exact phrases and individual words
   const filteredResults = qaPairs.filter((qa) => {
     const searchLower = searchQuery.toLowerCase();
     const questionLower = qa.question.toLowerCase();
     const answerLower = qa.answer.toLowerCase();
-    
+
     const exactMatch = questionLower.includes(searchLower) || answerLower.includes(searchLower);
-    
     const searchWords = searchLower.split(/\s+/).filter(w => w.length > 0);
-    const wordMatch = searchWords.some(word => 
+    const wordMatch = searchWords.some(word =>
       questionLower.includes(word) || answerLower.includes(word)
     );
-    
+
     const matchesQuery = exactMatch || wordMatch;
-    const matchesCategory = !selectedCategory || qa.category_id === parseInt(selectedCategory);
+    const matchesCategory = !selectedCategory || 
+      (qa.category_ids && qa.category_ids.includes(parseInt(selectedCategory)));
     return matchesQuery && matchesCategory;
   });
 
-  // Admin search & filter
   const filteredAdminResults = qaPairs.filter((qa) => {
     const searchLower = adminSearchQuery.toLowerCase();
     const questionLower = qa.question.toLowerCase();
     const answerLower = qa.answer.toLowerCase();
-    
+
     const exactMatch = questionLower.includes(searchLower) || answerLower.includes(searchLower);
-    
     const searchWords = searchLower.split(/\s+/).filter(w => w.length > 0);
-    const wordMatch = searchWords.some(word => 
+    const wordMatch = searchWords.some(word =>
       questionLower.includes(word) || answerLower.includes(word)
     );
-    
+
     return exactMatch || wordMatch;
   });
 
-  // Admin: Add/Update Q&A
   const handleSaveQA = async (e) => {
     e.preventDefault();
     setAdminError('');
     setAdminSuccess('');
 
-    if (!adminQuestion.trim() || !adminAnswer.trim() || !adminCategory) {
-      setAdminError('Question, answer, and category are required');
+    if (!adminQuestion.trim() || !adminAnswer.trim() || adminCategories.length === 0) {
+      setAdminError('Question, answer, and at least one category are required');
       return;
     }
 
     try {
-      const categoryId = parseInt(adminCategory);
-
       if (editingId) {
         const { error: updateError } = await supabase
           .from('qa_pairs')
@@ -316,7 +184,7 @@ function App() {
             question: adminQuestion,
             answer: adminAnswer,
             image: adminImage,
-            category_id: categoryId,
+            category_ids: adminCategories,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingId);
@@ -330,7 +198,7 @@ function App() {
             question: adminQuestion,
             answer: adminAnswer,
             image: adminImage,
-            category_id: categoryId,
+            category_ids: adminCategories,
           });
 
         if (insertError) throw insertError;
@@ -340,7 +208,7 @@ function App() {
       setAdminQuestion('');
       setAdminAnswer('');
       setAdminImage(null);
-      setAdminCategory('');
+      setAdminCategories([]);
       setEditingId(null);
       await loadData();
 
@@ -350,17 +218,15 @@ function App() {
     }
   };
 
-  // Admin: Edit
   const handleEdit = (qa) => {
     setEditingId(qa.id);
     setAdminQuestion(qa.question);
     setAdminAnswer(qa.answer);
     setAdminImage(qa.image || null);
-    setAdminCategory(qa.category_id?.toString() || '');
+    setAdminCategories(qa.category_ids || []);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Admin: Delete
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this Q&A?')) return;
 
@@ -377,17 +243,127 @@ function App() {
     }
   };
 
-  // Admin: Cancel edit
   const handleCancelEdit = () => {
     setEditingId(null);
     setAdminQuestion('');
     setAdminAnswer('');
     setAdminImage(null);
-    setAdminCategory('');
+    setAdminCategories([]);
     setAdminError('');
   };
 
-  // Handle manage click
+  const handleAskTeam = async (e) => {
+    e.preventDefault();
+    setAskTeamError('');
+    setAskTeamSuccess('');
+
+    if (!askTeamName.trim() || !askTeamEmail.trim() || !askTeamQuestion.trim() || askTeamCategories.length === 0) {
+      setAskTeamError('All fields are required');
+      return;
+    }
+
+    try {
+      const ticketId = generateTicketId();
+
+      const { error: insertError } = await supabase
+        .from('pending_questions')
+        .insert({
+          ticket_id: ticketId,
+          user_email: askTeamEmail,
+          user_name: askTeamName,
+          question: askTeamQuestion,
+          category_ids: askTeamCategories,
+          status: 'open'
+        });
+
+      if (insertError) throw insertError;
+
+      console.log('Email sent to engineers:', ENGINEER_EMAILS);
+      console.log('Ticket:', ticketId);
+
+      setAskTeamSuccess(`Question submitted! Your ticket ID is: ${ticketId}. You'll receive updates at ${askTeamEmail}`);
+
+      setAskTeamName('');
+      setAskTeamEmail('');
+      setAskTeamQuestion('');
+      setAskTeamCategories([]);
+      setShowAskTeam(false);
+
+      await loadData();
+
+      setTimeout(() => setAskTeamSuccess(''), 5000);
+    } catch (err) {
+      setAskTeamError(`Error: ${err.message}`);
+    }
+  };
+
+  const handleRespond = async (e) => {
+    e.preventDefault();
+    setAdminError('');
+    setAdminSuccess('');
+
+    if (!responseText.trim()) {
+      setAdminError('Response text is required');
+      return;
+    }
+
+    try {
+      const pending = respondingTo;
+
+      if (responseType === 'answer') {
+        if (responseCategories.length === 0) {
+          setAdminError('At least one category is required when adding to KB');
+          return;
+        }
+
+        const { error: addError } = await supabase
+          .from('qa_pairs')
+          .insert({
+            question: pending.question,
+            answer: responseText,
+            category_ids: responseCategories,
+            image: null
+          });
+        if (addError) throw addError;
+
+        const { error: updateError } = await supabase
+          .from('pending_questions')
+          .update({
+            status: 'answered',
+            engineer_response: responseText,
+            resolved_at: new Date().toISOString()
+          })
+          .eq('id', pending.id);
+        if (updateError) throw updateError;
+
+        setAdminSuccess('Answer added to KB and user notified!');
+      } else {
+        const { error: updateError } = await supabase
+          .from('pending_questions')
+          .update({
+            status: 'info_needed',
+            engineer_response: responseText
+          })
+          .eq('id', pending.id);
+        if (updateError) throw updateError;
+
+        setAdminSuccess('User requested for more info!');
+      }
+
+      console.log('Email sent to user:', pending.user_email);
+
+      setResponseText('');
+      setResponseType('answer');
+      setResponseCategories([]);
+      setRespondingTo(null);
+      await loadData();
+
+      setTimeout(() => setAdminSuccess(''), 3000);
+    } catch (err) {
+      setAdminError(`Error: ${err.message}`);
+    }
+  };
+
   const handleManageClick = () => {
     if (!adminAuthenticated) {
       setShowPasswordPrompt(true);
@@ -397,7 +373,14 @@ function App() {
     }
   };
 
-  // Render
+  const toggleCategory = (categoryId, currentList, setList) => {
+    if (currentList.includes(categoryId)) {
+      setList(currentList.filter(id => id !== categoryId));
+    } else {
+      setList([...currentList, categoryId]);
+    }
+  };
+
   return (
     <div className="app">
       <header className="header">
@@ -455,48 +438,51 @@ function App() {
             </div>
 
             {error && <div className="error">{error}</div>}
-{loading && <div className="loading">Loading...</div>}
+            {loading && <div className="loading">Loading...</div>}
 
-<>
-  {!loading && filteredResults.length === 0 && (
-    <div className="empty">
-      <p>No questions found.</p>
-    </div>
-  )}
+            {!loading && filteredResults.length === 0 && (
+              <div className="empty">
+                <p>No questions found.</p>
+              </div>
+            )}
 
-  <div className="results">
-  {filteredResults.map((qa) => (
-    <div key={qa.id} className="qa-card">
-      <div className="qa-header">
-        <div>
-          <h2>{qa.question}</h2>
-          <span className="category-badge">{qa.categories?.name}</span>
-        </div>
-      </div>
-      {qa.image && (
-        <img 
-          src={qa.image} 
-          alt="Q&A" 
-          className="qa-image" 
-          onClick={() => setSelectedImage(qa.image)}
-          style={{ cursor: 'pointer' }}
-        />
-      )}
-      <p className="qa-answer">{qa.answer}</p>
-    </div>
-  ))}
-</div>
+            <div className="results">
+              {filteredResults.map((qa) => (
+                <div key={qa.id} className="qa-card">
+                  <div className="qa-header">
+                    <div>
+                      <h2>{qa.question}</h2>
+                      <div className="category-badges">
+                        {getCategoryNames(qa.category_ids).map((name) => (
+                          <span key={name} className="category-badge">{name}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {qa.image && (
+                    <img
+                      src={qa.image}
+                      alt="Q&A"
+                      className="qa-image"
+                      onClick={() => setSelectedImage(qa.image)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  )}
+                  <p className="qa-answer">{qa.answer}</p>
+                </div>
+              ))}
+            </div>
 
-<div className="ask-team-section">
-  <button
-    className="btn btn-primary"
-    onClick={() => setShowAskTeam(true)}
-  >
-    Have a different question? Ask the Engineering Team
-  </button>
-</div>
-
-</>
+            <div className="ask-team-section">
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowAskTeam(true)}
+              >
+                Have a different question? Ask the Engineering Team
+              </button>
+            </div>
+          </div>
+        )}
 
         {view === 'admin' && (
           <div className="admin-main">
@@ -507,12 +493,12 @@ function App() {
               >
                 Q&A Manager
               </button>
-             <button
-  className={`admin-tab ${manageTab === 'pending' ? 'active' : ''}`}
-  onClick={() => setManageTab('pending')}
->
-  Pending Questions ({pendingQuestions.length})
-</button>
+              <button
+                className={`admin-tab ${manageTab === 'pending' ? 'active' : ''}`}
+                onClick={() => setManageTab('pending')}
+              >
+                Pending Questions ({pendingQuestions.length})
+              </button>
             </div>
 
             {manageTab === 'qa' && (
@@ -572,19 +558,19 @@ function App() {
                     </div>
 
                     <div className="form-group">
-                      <label>Category</label>
-                      <select
-                        value={adminCategory}
-                        onChange={(e) => setAdminCategory(e.target.value)}
-                        className="form-select-large"
-                      >
-                        <option value="">Select a category</option>
+                      <label>Categories (select one or more)</label>
+                      <div className="category-checkboxes">
                         {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id}>
+                          <label key={cat.id} className="checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={adminCategories.includes(cat.id)}
+                              onChange={() => toggleCategory(cat.id, adminCategories, setAdminCategories)}
+                            />
                             {cat.name}
-                          </option>
+                          </label>
                         ))}
-                      </select>
+                      </div>
                     </div>
 
                     <div className="form-actions">
@@ -620,7 +606,11 @@ function App() {
                         <div className="qa-list-header">
                           <div>
                             <h3>{qa.question}</h3>
-                            <span className="category-badge">{qa.categories?.name}</span>
+                            <div className="category-badges">
+                              {getCategoryNames(qa.category_ids).map((name) => (
+                                <span key={name} className="category-badge">{name}</span>
+                              ))}
+                            </div>
                           </div>
                           <div className="qa-list-actions">
                             <button
@@ -727,19 +717,19 @@ function App() {
 
                           {responseType === 'answer' && (
                             <div className="form-group">
-                              <label>Category</label>
-                              <select
-                                value={responseCategory}
-                                onChange={(e) => setResponseCategory(e.target.value)}
-                                className="form-select-large"
-                              >
-                                <option value="">Select a category</option>
+                              <label>Categories (select one or more)</label>
+                              <div className="category-checkboxes">
                                 {categories.map((cat) => (
-                                  <option key={cat.id} value={cat.id}>
+                                  <label key={cat.id} className="checkbox-label">
+                                    <input
+                                      type="checkbox"
+                                      checked={responseCategories.includes(cat.id)}
+                                      onChange={() => toggleCategory(cat.id, responseCategories, setResponseCategories)}
+                                    />
                                     {cat.name}
-                                  </option>
+                                  </label>
                                 ))}
-                              </select>
+                              </div>
                             </div>
                           )}
 
@@ -754,7 +744,7 @@ function App() {
                                 setRespondingTo(null);
                                 setResponseText('');
                                 setResponseType('answer');
-                                setResponseCategory('');
+                                setResponseCategories([]);
                               }}
                             >
                               Cancel
@@ -765,7 +755,10 @@ function App() {
                     </div>
                   ))}
                 </div>
-                 </>
+              </div>
+            )}
+          </div>
+        )}
 
         {showAskTeam && (
           <div className="modal-overlay" onClick={() => setShowAskTeam(false)}>
@@ -805,18 +798,19 @@ function App() {
                 </div>
 
                 <div className="form-group">
-                  <label>Category</label>
-                  <select
-                    value={askTeamCategory}
-                    onChange={(e) => setAskTeamCategory(e.target.value)}
-                  >
-                    <option value="">Select a category</option>
+                  <label>Categories (select one or more)</label>
+                  <div className="category-checkboxes">
                     {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
+                      <label key={cat.id} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={askTeamCategories.includes(cat.id)}
+                          onChange={() => toggleCategory(cat.id, askTeamCategories, setAskTeamCategories)}
+                        />
                         {cat.name}
-                      </option>
+                      </label>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 <div className="form-group">
