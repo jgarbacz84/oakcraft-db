@@ -507,7 +507,7 @@ function App() {
                   )}
                   <p className="qa-answer">{qa.answer}</p>
                 </div>
-      ))}}
+      )}}
 </div>
 
         {view === 'admin' && (
