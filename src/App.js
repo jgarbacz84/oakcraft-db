@@ -457,21 +457,14 @@ function App() {
             {error && <div className="error">{error}</div>}
             {loading && <div className="loading">Loading...</div>}
 
-            {!loading && filteredResults.length === 0 && (
-              <div className="empty">
-                <p>No questions found.</p>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => setShowAskTeam(true)}
-                  style={{ marginTop: '1rem' }}
-                >
-                  Ask the Engineering Team
-                </button>
-              </div>
-            )}
+       {!loading && filteredResults.length === 0 && (
+  <div className="empty">
+    <p>No questions found.</p>
+  </div>
+)}
 
-            <div className="results">
-              {filteredResults.map((qa) => (
+<div className="results">
+  {filteredResults.map((qa) => (
                 <div key={qa.id} className="qa-card">
                   <div className="qa-header">
                     <div>
@@ -479,6 +472,16 @@ function App() {
                       <span className="category-badge">{qa.categories?.name}</span>
                     </div>
                   </div>
+</div>
+
+<div className="ask-team-section">
+  <button
+    className="btn btn-primary"
+    onClick={() => setShowAskTeam(true)}
+  >
+    Have a different question? Ask the Engineering Team
+  </button>
+</div>
                   {qa.image && (
                     <img 
                       src={qa.image} 
