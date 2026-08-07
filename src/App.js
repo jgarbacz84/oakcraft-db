@@ -521,12 +521,12 @@ function App() {
               >
                 Q&A Manager
               </button>
-              <button
-                className={`admin-tab ${manageTab === 'pending' ? 'active' : ''}`}
-                onClick={() => setManageTab('pending')}
-              >
-                Pending Questions ({pendingQuestions.length})
-              </button>
+             <button
+  className={`admin-tab ${manageTab === 'pending' ? 'active' : ''}`}
+  onClick={() => setManageTab('pending')}
+>
+  Pending Questions ({pendingQuestions.length})
+</button>
             </div>
 
             {manageTab === 'qa' && (
