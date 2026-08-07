@@ -199,7 +199,6 @@ function App() {
 
         if (updateError) throw updateError;
 
-        // If this answer has a ticket, notify the user of the update
         if (hasTicket) {
           const ticketQuestion = pendingQuestions.find(q => q.ticket_id === existingQA.ticket_id);
           if (ticketQuestion) {
@@ -334,7 +333,6 @@ function App() {
           return;
         }
 
-        // Create ticket link for the answer
         const ticketLink = `\n\n---\n[Ticket: ${pending.ticket_id}](https://eng-db.vercel.app/ticket/${pending.ticket_id})`;
         const answerWithTicket = responseText + ticketLink;
 
@@ -436,14 +434,24 @@ function App() {
       <main className="container">
         {view === 'search' && (
           <div className="search-view">
-            <div className="search-box">
-              <input
-                type="text"
-                placeholder="Search questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-              />
+            <div className="search-controls">
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Search questions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <button
+                className={`btn btn-ask-team ${searchQuery.trim() ? 'active' : 'disabled'}`}
+                onClick={() => setShowAskTeam(true)}
+                disabled={!searchQuery.trim()}
+                title={searchQuery.trim() ? 'Ask the Engineering Team' : 'Try searching first'}
+              >
+                {searchQuery.trim() ? 'Ask the Team' : 'Search First'}
+              </button>
             </div>
 
             <div className="filters">
@@ -463,7 +471,7 @@ function App() {
             {error && <div className="error">{error}</div>}
             {loading && <div className="loading">Loading...</div>}
 
-            {!loading && filteredResults.length === 0 && (
+            {!loading && filteredResults.length === 0 && searchQuery.trim() && (
               <div className="empty">
                 <p>No questions found.</p>
               </div>
@@ -494,15 +502,6 @@ function App() {
                   <p className="qa-answer">{qa.answer}</p>
                 </div>
               ))}
-            </div>
-
-            <div className="ask-team-section">
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowAskTeam(true)}
-              >
-                Have a different question? Ask the Engineering Team
-              </button>
             </div>
           </div>
         )}
@@ -718,7 +717,7 @@ function App() {
                           </div>
                         </div>
 
-                       {ticketTab === 'open' && (!respondingTo || (respondingTo && respondingTo.id !== pending.id)) ? (
+                        {ticketTab === 'open' && (!respondingTo || respondingTo.id !== pending.id) ? (
                           <button
                             className="btn btn-primary"
                             onClick={() => setRespondingTo(pending)}
