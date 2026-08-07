@@ -6,7 +6,6 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// EMAIL PLACEHOLDERS - Replace with actual emails
 const ENGINEER_EMAILS = [
   'engineer1@oakcraft.com',
   'engineer2@oakcraft.com',
@@ -16,6 +15,7 @@ const ENGINEER_EMAILS = [
 function App() {
   const [view, setView] = useState('search');
   const [manageTab, setManageTab] = useState('qa');
+  const [ticketTab, setTicketTab] = useState('open');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [qaPairs, setQaPairs] = useState([]);
@@ -166,6 +166,10 @@ function App() {
     return exactMatch || wordMatch;
   });
 
+  const getPendingByStatus = (status) => {
+    return pendingQuestions.filter(q => q.status === status);
+  };
+
   const handleSaveQA = async (e) => {
     e.preventDefault();
     setAdminError('');
@@ -178,6 +182,9 @@ function App() {
 
     try {
       if (editingId) {
+        const existingQA = qaPairs.find(qa => qa.id === editingId);
+        const hasTicket = existingQA?.ticket_id;
+
         const { error: updateError } = await supabase
           .from('qa_pairs')
           .update({
@@ -186,11 +193,22 @@ function App() {
             image: adminImage,
             category_ids: adminCategories,
             updated_at: new Date().toISOString(),
+            updated_count: (existingQA?.updated_count || 0) + 1
           })
           .eq('id', editingId);
 
         if (updateError) throw updateError;
-        setAdminSuccess('Q&A updated');
+
+        // If this answer has a ticket, notify the user of the update
+        if (hasTicket) {
+          const ticketQuestion = pendingQuestions.find(q => q.ticket_id === existingQA.ticket_id);
+          if (ticketQuestion) {
+            console.log('Update alert email sent to:', ticketQuestion.user_email);
+            console.log('Ticket:', existingQA.ticket_id);
+          }
+        }
+
+        setAdminSuccess('Q&A updated' + (hasTicket ? ' and user notified!' : ''));
       } else {
         const { error: insertError } = await supabase
           .from('qa_pairs')
@@ -316,13 +334,18 @@ function App() {
           return;
         }
 
+        // Create ticket link for the answer
+        const ticketLink = `\n\n---\n[Ticket: ${pending.ticket_id}](https://eng-db.vercel.app/ticket/${pending.ticket_id})`;
+        const answerWithTicket = responseText + ticketLink;
+
         const { error: addError } = await supabase
           .from('qa_pairs')
           .insert({
             question: pending.question,
-            answer: responseText,
+            answer: answerWithTicket,
             category_ids: responseCategories,
-            image: null
+            image: null,
+            ticket_id: pending.ticket_id
           });
         if (addError) throw addError;
 
@@ -497,7 +520,7 @@ function App() {
                 className={`admin-tab ${manageTab === 'pending' ? 'active' : ''}`}
                 onClick={() => setManageTab('pending')}
               >
-                Pending Questions ({pendingQuestions.length})
+                Support Tickets
               </button>
             </div>
 
@@ -611,6 +634,11 @@ function App() {
                                 <span key={name} className="category-badge">{name}</span>
                               ))}
                             </div>
+                            {qa.ticket_id && (
+                              <div className="ticket-link-admin">
+                                <small>Ticket: {qa.ticket_id}</small>
+                              </div>
+                            )}
                           </div>
                           <div className="qa-list-actions">
                             <button
@@ -639,121 +667,141 @@ function App() {
             )}
 
             {manageTab === 'pending' && (
-              <div className="pending-view">
-                <h2>Pending Support Questions</h2>
+              <div className="pending-main">
+                <div className="ticket-sub-tabs">
+                  <button
+                    className={`ticket-tab ${ticketTab === 'open' ? 'active' : ''}`}
+                    onClick={() => setTicketTab('open')}
+                  >
+                    Pending ({getPendingByStatus('open').length})
+                  </button>
+                  <button
+                    className={`ticket-tab ${ticketTab === 'info_needed' ? 'active' : ''}`}
+                    onClick={() => setTicketTab('info_needed')}
+                  >
+                    Awaiting Info ({getPendingByStatus('info_needed').length})
+                  </button>
+                  <button
+                    className={`ticket-tab ${ticketTab === 'answered' ? 'active' : ''}`}
+                    onClick={() => setTicketTab('answered')}
+                  >
+                    Answered ({getPendingByStatus('answered').length})
+                  </button>
+                </div>
 
-                {adminError && <div className="error">{adminError}</div>}
-                {adminSuccess && <div className="success">{adminSuccess}</div>}
+                <div className="pending-view">
+                  {adminError && <div className="error">{adminError}</div>}
+                  {adminSuccess && <div className="success">{adminSuccess}</div>}
 
-                {loading && <div className="loading">Loading...</div>}
+                  {loading && <div className="loading">Loading...</div>}
 
-                {pendingQuestions.length === 0 && (
-                  <div className="empty">
-                    <p>No pending questions!</p>
-                  </div>
-                )}
+                  {getPendingByStatus(ticketTab).length === 0 && (
+                    <div className="empty">
+                      <p>
+                        {ticketTab === 'open' && 'No pending questions!'}
+                        {ticketTab === 'info_needed' && 'No questions awaiting info!'}
+                        {ticketTab === 'answered' && 'No answered questions!'}
+                      </p>
+                    </div>
+                  )}
 
-                <div className="pending-list">
-                  {pendingQuestions.map((pending) => (
-                    <div key={pending.id} className="pending-item">
-                      <div className="pending-header">
-                        <div>
-                          <h3>{pending.question}</h3>
-                          <div className="pending-meta">
-                            <span className="ticket-id">Ticket: {pending.ticket_id}</span>
-                            <span className="user-email">{pending.user_name} ({pending.user_email})</span>
-                            <span className={`status-badge status-${pending.status}`}>
-                              {pending.status === 'open' && 'Open'}
-                              {pending.status === 'info_needed' && 'Awaiting User Info'}
-                              {pending.status === 'answered' && 'Answered'}
-                            </span>
+                  <div className="pending-list">
+                    {getPendingByStatus(ticketTab).map((pending) => (
+                      <div key={pending.id} className="pending-item">
+                        <div className="pending-header">
+                          <div>
+                            <h3>{pending.question}</h3>
+                            <div className="pending-meta">
+                              <span className="ticket-id">Ticket: {pending.ticket_id}</span>
+                              <span className="user-email">{pending.user_name} ({pending.user_email})</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {!respondingTo || respondingTo.id !== pending.id ? (
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => setRespondingTo(pending)}
-                        >
-                          Respond
-                        </button>
-                      ) : (
-                        <form onSubmit={handleRespond} className="response-form">
-                          <div className="form-group">
-                            <label>Response Type</label>
-                            <div className="response-type-options">
-                              <label>
-                                <input
-                                  type="radio"
-                                  value="answer"
-                                  checked={responseType === 'answer'}
-                                  onChange={(e) => setResponseType(e.target.value)}
-                                />
-                                Answer & Add to KB
-                              </label>
-                              <label>
-                                <input
-                                  type="radio"
-                                  value="info"
-                                  checked={responseType === 'info'}
-                                  onChange={(e) => setResponseType(e.target.value)}
-                                />
-                                Need More Information
-                              </label>
-                            </div>
-                          </div>
-
-                          <div className="form-group">
-                            <label>Your Response</label>
-                            <textarea
-                              value={responseText}
-                              onChange={(e) => setResponseText(e.target.value)}
-                              placeholder="Type your response..."
-                              rows="6"
-                              className="form-textarea-large"
-                            />
-                          </div>
-
-                          {responseType === 'answer' && (
+                        {ticketTab === 'open' && !respondingTo || (respondingTo && respondingTo.id !== pending.id) ? (
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => setRespondingTo(pending)}
+                          >
+                            Respond
+                          </button>
+                        ) : ticketTab === 'open' && respondingTo && respondingTo.id === pending.id ? (
+                          <form onSubmit={handleRespond} className="response-form">
                             <div className="form-group">
-                              <label>Categories (select one or more)</label>
-                              <div className="category-checkboxes">
-                                {categories.map((cat) => (
-                                  <label key={cat.id} className="checkbox-label">
-                                    <input
-                                      type="checkbox"
-                                      checked={responseCategories.includes(cat.id)}
-                                      onChange={() => toggleCategory(cat.id, responseCategories, setResponseCategories)}
-                                    />
-                                    {cat.name}
-                                  </label>
-                                ))}
+                              <label>Response Type</label>
+                              <div className="response-type-options">
+                                <label>
+                                  <input
+                                    type="radio"
+                                    value="answer"
+                                    checked={responseType === 'answer'}
+                                    onChange={(e) => setResponseType(e.target.value)}
+                                  />
+                                  Answer & Add to KB
+                                </label>
+                                <label>
+                                  <input
+                                    type="radio"
+                                    value="info"
+                                    checked={responseType === 'info'}
+                                    onChange={(e) => setResponseType(e.target.value)}
+                                  />
+                                  Need More Information
+                                </label>
                               </div>
                             </div>
-                          )}
 
-                          <div className="form-actions">
-                            <button type="submit" className="btn btn-primary">
-                              Send Response
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-secondary"
-                              onClick={() => {
-                                setRespondingTo(null);
-                                setResponseText('');
-                                setResponseType('answer');
-                                setResponseCategories([]);
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </form>
-                      )}
-                    </div>
-                  ))}
+                            <div className="form-group">
+                              <label>Your Response</label>
+                              <textarea
+                                value={responseText}
+                                onChange={(e) => setResponseText(e.target.value)}
+                                placeholder="Type your response..."
+                                rows="6"
+                                className="form-textarea-large"
+                              />
+                            </div>
+
+                            {responseType === 'answer' && (
+                              <div className="form-group">
+                                <label>Categories (select one or more)</label>
+                                <div className="category-checkboxes">
+                                  {categories.map((cat) => (
+                                    <label key={cat.id} className="checkbox-label">
+                                      <input
+                                        type="checkbox"
+                                        checked={responseCategories.includes(cat.id)}
+                                        onChange={() => toggleCategory(cat.id, responseCategories, setResponseCategories)}
+                                      />
+                                      {cat.name}
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="form-actions">
+                              <button type="submit" className="btn btn-primary">
+                                Send Response
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                  setRespondingTo(null);
+                                  setResponseText('');
+                                  setResponseType('answer');
+                                  setResponseCategories([]);
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
