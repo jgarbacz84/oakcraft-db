@@ -465,51 +465,38 @@ function App() {
   )}
 
   <div className="results">
-    {filteredResults.map((qa) => (
-      <div key={qa.id} className="qa-card">
-        <div className="qa-header">
-          <div>
-            <h2>{qa.question}</h2>
-            <span className="category-badge">{qa.categories?.name}</span>
-          </div>
+  {filteredResults.map((qa) => (
+    <div key={qa.id} className="qa-card">
+      <div className="qa-header">
+        <div>
+          <h2>{qa.question}</h2>
+          <span className="category-badge">{qa.categories?.name}</span>
         </div>
-        {qa.image && (
-          <img 
-            src={qa.image} 
-            alt="Q&A" 
-            className="qa-image" 
-            onClick={() => setSelectedImage(qa.image)}
-            style={{ cursor: 'pointer' }}
-          />
-        )}
-        <p className="qa-answer">{qa.answer}</p>
       </div>
-    ))}
-  </div>
-
-  <div className="ask-team-section">
-    <button
-      className="btn btn-primary"
-      onClick={() => setShowAskTeam(true)}
-    >
-      Have a different question? Ask the Engineering Team
-    </button>
-  </div>
-</>
-                  {qa.image && (
-                    <img 
-                      src={qa.image} 
-                      alt="Q&A" 
-                      className="qa-image" 
-                      onClick={() => setSelectedImage(qa.image)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  )}
-                  <p className="qa-answer">{qa.answer}</p>
-                </div>
-      )}}
-        </div>
+      {qa.image && (
+        <img 
+          src={qa.image} 
+          alt="Q&A" 
+          className="qa-image" 
+          onClick={() => setSelectedImage(qa.image)}
+          style={{ cursor: 'pointer' }}
+        />
+      )}
+      <p className="qa-answer">{qa.answer}</p>
+    </div>
+  ))}
 </div>
+
+<div className="ask-team-section">
+  <button
+    className="btn btn-primary"
+    onClick={() => setShowAskTeam(true)}
+  >
+    Have a different question? Ask the Engineering Team
+  </button>
+</div>
+
+</>
 
         {view === 'admin' && (
           <div className="admin-main">
