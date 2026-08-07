@@ -765,11 +765,7 @@ function App() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-          </>
+                 </>
 
         {showAskTeam && (
           <div className="modal-overlay" onClick={() => setShowAskTeam(false)}>
