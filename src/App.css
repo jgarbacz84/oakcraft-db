@@ -112,7 +112,7 @@ body {
 /* Container */
 .container {
   flex: 1;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   width: 100%;
@@ -239,12 +239,46 @@ body {
   margin-top: 0.5rem;
 }
 
+/* Admin Main */
+.admin-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.admin-tab {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #999;
+  transition: all 0.2s;
+}
+
+.admin-tab:hover {
+  color: #8B4513;
+}
+
+.admin-tab.active {
+  color: #8B4513;
+  border-bottom-color: #8B4513;
+}
+
 /* Admin View */
 .admin-view {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  height: calc(100vh - 250px);
+  height: calc(100vh - 300px);
 }
 
 .admin-form-section {
@@ -305,6 +339,33 @@ body {
   border: 2px solid #ddd;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.image-upload-area {
+  border: 2px dashed #8B4513;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-upload-area:hover {
+  background: #f5f5f5;
+  border-color: #A0522D;
+}
+
+.image-upload-area input {
+  cursor: pointer;
+  width: 100%;
+}
+
+.image-help-text {
+  color: #999;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  pointer-events: none;
 }
 
 .image-preview {
@@ -399,9 +460,6 @@ body {
 .admin-list-section {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  max-height: 100%;
-  padding-right: 0.5rem;
 }
 
 .admin-list-section h2 {
@@ -433,6 +491,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
 .qa-list-item {
@@ -484,6 +544,118 @@ body {
   word-break: break-word;
 }
 
+/* Pending View */
+.pending-view {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 2rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+.pending-view h2 {
+  margin-bottom: 2rem;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pending-item {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.pending-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pending-header {
+  margin-bottom: 1rem;
+}
+
+.pending-header h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #8B4513;
+  margin-bottom: 0.75rem;
+}
+
+.pending-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.ticket-id {
+  font-weight: 600;
+  color: #333;
+  font-family: monospace;
+}
+
+.user-email {
+  color: #0066cc;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-open {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-info_needed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-answered {
+  background: #d4edda;
+  color: #155724;
+}
+
+.response-form {
+  background: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.response-type-options {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.response-type-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.response-type-options input[type="radio"] {
+  cursor: pointer;
+}
+
 /* Status Messages */
 .error {
   background: #ffebee;
@@ -520,32 +692,113 @@ body {
   border-radius: 12px;
   color: #999;
 }
-/* Image Upload Area */
-.image-upload-area {
-  border: 2px dashed #8B4513;
-  border-radius: 8px;
-  padding: 1.5rem;
-  text-align: center;
-  background: #fafafa;
+
+/* Ask Team Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-header h2 {
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
   cursor: pointer;
+  color: #999;
   transition: all 0.2s;
 }
 
-.image-upload-area:hover {
-  background: #f5f5f5;
-  border-color: #A0522D;
+.close-modal-btn:hover {
+  color: #333;
 }
 
-.image-upload-area input {
+.modal-content form {
+  padding: 0 2rem 2rem;
+}
+
+/* Image Modal */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
   cursor: pointer;
-  width: 100%;
+  overflow: auto;
+  padding: 2rem;
 }
 
-.image-help-text {
-  color: #999;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-  pointer-events: none;
+.image-modal-content {
+  position: relative;
+  max-width: 70vw;
+  max-height: 70vh;
+}
+
+.image-modal-content img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+}
+
+.close-image-modal {
+  position: absolute;
+  top: -45px;
+  right: 0;
+  background: white;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: black;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-image-modal:hover {
+  background: #ddd;
 }
 
 /* Password Modal */
@@ -606,6 +859,7 @@ body {
 @media (max-width: 968px) {
   .admin-view {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .admin-form-section {
@@ -625,6 +879,10 @@ body {
 
   .search-view {
     max-width: 100%;
+  }
+
+  .modal-content {
+    max-width: 90%;
   }
 
   .qa-header {
@@ -648,56 +906,25 @@ body {
   .form-select-large {
     width: 100%;
   }
-}
-/* Image Modal */
-.image-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  cursor: pointer;
-  overflow: auto;
-  padding: 2rem;
-}
 
-.image-modal-content {
-  position: relative;
-  max-width: 70vw;
-  max-height: 70vh;
-}
+  .pending-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 
-.image-modal-content img {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 8px;
-  display: block;
-}
+  .admin-tabs {
+    flex-direction: column;
+    border-bottom: none;
+  }
 
-.close-image-modal {
-  position: absolute;
-  top: -45px;
-  right: 0;
-  background: white;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: black;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
-}
+  .admin-tab {
+    border-bottom: 2px solid transparent;
+    border-left: 3px solid transparent;
+    padding-left: 1rem;
+  }
 
-.close-image-modal:hover {
-  background: #ddd;
+  .admin-tab.active {
+    border-bottom: none;
+    border-left-color: #8B4513;
+  }
 }
