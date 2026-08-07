@@ -718,7 +718,7 @@ function App() {
                           </div>
                         </div>
 
-                        {ticketTab === 'open' && !respondingTo || (respondingTo && respondingTo.id !== pending.id) ? (
+                       {ticketTab === 'open' && (!respondingTo || (respondingTo && respondingTo.id !== pending.id)) ? (
                           <button
                             className="btn btn-primary"
                             onClick={() => setRespondingTo(pending)}
