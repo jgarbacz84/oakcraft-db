@@ -455,33 +455,47 @@ function App() {
             </div>
 
             {error && <div className="error">{error}</div>}
-            {loading && <div className="loading">Loading...</div>}
+{loading && <div className="loading">Loading...</div>}
 
-       {!loading && filteredResults.length === 0 && (
-  <div className="empty">
-    <p>No questions found.</p>
+<>
+  {!loading && filteredResults.length === 0 && (
+    <div className="empty">
+      <p>No questions found.</p>
+    </div>
+  )}
+
+  <div className="results">
+    {filteredResults.map((qa) => (
+      <div key={qa.id} className="qa-card">
+        <div className="qa-header">
+          <div>
+            <h2>{qa.question}</h2>
+            <span className="category-badge">{qa.categories?.name}</span>
+          </div>
+        </div>
+        {qa.image && (
+          <img 
+            src={qa.image} 
+            alt="Q&A" 
+            className="qa-image" 
+            onClick={() => setSelectedImage(qa.image)}
+            style={{ cursor: 'pointer' }}
+          />
+        )}
+        <p className="qa-answer">{qa.answer}</p>
+      </div>
+    ))}
   </div>
-)}
 
-<div className="results">
-  {filteredResults.map((qa) => (
-                <div key={qa.id} className="qa-card">
-                  <div className="qa-header">
-                    <div>
-                      <h2>{qa.question}</h2>
-                      <span className="category-badge">{qa.categories?.name}</span>
-                    </div>
-                  </div>
-</div>
-
-<div className="ask-team-section">
-  <button
-    className="btn btn-primary"
-    onClick={() => setShowAskTeam(true)}
-  >
-    Have a different question? Ask the Engineering Team
-  </button>
-</div>
+  <div className="ask-team-section">
+    <button
+      className="btn btn-primary"
+      onClick={() => setShowAskTeam(true)}
+    >
+      Have a different question? Ask the Engineering Team
+    </button>
+  </div>
+</>
                   {qa.image && (
                     <img 
                       src={qa.image} 
